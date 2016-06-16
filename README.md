@@ -1,7 +1,9 @@
-## randomProjections
+randomProjections
+=================
 An algorithm to discover motifs(recurring contiguous subsequences) in symbolic data.
 
- # Terminology:
+Terminology
+-----------
 
  * data: Long string containing instances of planted or real motifs, flawed by up to a specified number of differences from the model.
  * n: Length of data
@@ -19,5 +21,5 @@ An algorithm to discover motifs(recurring contiguous subsequences) in symbolic d
      If there were more indices, the k-scatter and the set of indices of deviations in a motif could never be disjoint.
  The indices can be in the range [0, L-1].
 
- * Friend: 2 strings a and  b in data are defined to be friends if they share some k-scatters (i.e. if for some random projections, the scatters of a and b are equal).
- */
+ * Friend: 2 strings a and  b in data are defined to be friends if they share some k-scatters
+     (i.e. if for some random projections, the scatters of a and b are equal).
