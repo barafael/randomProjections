@@ -145,10 +145,10 @@ public class Algorithm {
                             for (Integer index : friends) {
                                 if (result.containsKey(index)) {
                                     List<Integer> indices = result.get(index);
-                                    friends.stream().filter(i -> i != index).forEach(indices::add);
+                                    friends.stream().filter(i -> !i.equals(index)).forEach(indices::add);
                                 } else {
                                     List<Integer> indices = new ArrayList<>();
-                                    friends.stream().filter(i -> i != index).forEach(indices::add);
+                                    friends.stream().filter(i -> !i.equals(index)).forEach(indices::add);
                                     result.put(index, indices);
                                 }
                             }
