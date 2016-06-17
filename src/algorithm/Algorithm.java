@@ -1,15 +1,12 @@
 package algorithm;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Algorithm to find a motif in a string of data by using random projections(random selections of indices).
  * Part of randomProjections, in package algorithm.
  */
-public class algorithm {
+public class Algorithm {
     /**
      * Random Projections algorithm
      * Takes a reference to data, a motif length and the amount of permitted errors.
@@ -22,7 +19,7 @@ public class algorithm {
      * @return Returns a mapping between motifs and their support
      */
     public static Map<String, Integer> randomProjections(String data, int motifLength, int permittedErrors, int iterations) {
-        if (data.length() < 15 | motifLength > data.length() / 3 | motifLength < 4 | permittedErrors > motifLength / 2) {
+        if (data.length() < 15 || motifLength > data.length() / 3 || motifLength < 4 || permittedErrors > motifLength / 2) {
             System.err.println("Arguments are not going to lead to satisfactory result!"); //TODO change parameters to more accurately reflect valid input ranges
         }
 
@@ -46,9 +43,10 @@ public class algorithm {
     private static int[] create_k(int motifLength) {
         int k_size = motifLength / 3;
         int[] k = new int[k_size];
+        Random randomInt = new Random();
         System.out.println("k: " + k_size + " random ints between 0 and L(excluding L). L: " + motifLength);
         for (int i = 0; i < k.length; i++) {
-            k[i] = (int) (Math.random() * motifLength);
+            k[i] = randomInt.nextInt(motifLength);
             System.out.println(k[i]);
         }
         return k;
@@ -58,17 +56,17 @@ public class algorithm {
     /**
      * Creates the k-scatter of the passed substring
      *
-     * @param substring        Substring to scatter
-     * @param chosenIndices Indices to shoose from substring
-     * @return
+     * @param substring     Substring to scatter
+     * @param chosenIndices Indices to choose from substring
+     * @return a string for which the characters are chosen as the characters at i for i in chosenIndex(the k-scatter of substring)
      */
     private static String applyScatter(String substring, int[] chosenIndices) {
         if (chosenIndices.length > substring.length()) {
             throw new IllegalArgumentException();
         }
         StringBuilder buddy = new StringBuilder(chosenIndices.length);
-        for (int i = 0; i < chosenIndices.length; i++) {
-            buddy.append(substring.charAt(chosenIndices[i]));
+        for (int chosenIndex : chosenIndices) {
+            buddy.append(substring.charAt(chosenIndex));
         }
         return buddy.toString();
     }

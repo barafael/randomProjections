@@ -1,4 +1,4 @@
-import static algorithm.algorithm.randomProjections;
+import static algorithm.Algorithm.randomProjections;
 
 /**
  * A motif is understood as a reappearing sequence.
