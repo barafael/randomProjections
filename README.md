@@ -2,6 +2,8 @@ randomProjections
 =================
 An algorithm to discover motifs(recurring contiguous subsequences) in symbolic data.
 
+Paper by Jeremy Buhler and Martin Tompa at: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.571.9730&rep=rep1&type=pdf
+
 Terminology
 -----------
 
