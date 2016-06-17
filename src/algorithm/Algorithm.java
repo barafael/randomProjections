@@ -1,6 +1,7 @@
 package algorithm;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 /**
  * Algorithm to find a motif in a string of data by using random projections(random selections of indices).
@@ -26,7 +27,7 @@ public class Algorithm {
         List<Map<String, List<Integer>>> hashes = new ArrayList<>(iterations);
         for (int i = 0; i < iterations; i++) {
             int[] k = create_k(motifLength);
-            Map<String, List<Integer>> hash = hash(data, motifLength, k);
+            Map<String, List<Integer>> hash = hashSubstring(data, motifLength, k);
             hashes.add(hash);
         }
         Map<Integer, List<Integer>> friendLists = makeFriendLists(hashes);
@@ -41,14 +42,20 @@ public class Algorithm {
      * k too large: overlap with error index, k too small: insufficient accuracy
      */
     private static int[] create_k(int motifLength) {
-        int k_size = motifLength / 3;
+        int k_size = (int) (motifLength * 0.4);
         int[] k = new int[k_size];
         Random randomInt = new Random();
         System.out.println("k: " + k_size + " random ints between 0 and L(excluding L). L: " + motifLength);
-        for (int i = 0; i < k.length; i++) {
-            k[i] = randomInt.nextInt(motifLength);
-            System.out.println(k[i]);
+        for (int i = 0; i < k_size; ) {
+            int randomIndex = randomInt.nextInt(motifLength);
+            boolean vacant = IntStream.of(k).noneMatch(integer -> integer == randomIndex); // check for duplicates
+            if (vacant) {
+                k[i] = randomIndex;
+                i++; // only increase counter if actually adding a new index
+            }
         }
+        Arrays.sort(k);
+        Arrays.stream(k).forEach(System.out::println);
         return k;
     }
 
@@ -88,7 +95,7 @@ public class Algorithm {
      * @return a mapping between k-scatters ks of substrings s of data and the indexes i where [ data[i + j] | j in k] == ks,
      * i. e. where substrings share the same scatter.
      */
-    private static Map<String, List<Integer>> hash(final String data, final int motifLength, final int[] chosenIndices) {
+    private static Map<String, List<Integer>> hashSubstring(final String data, final int motifLength, final int[] chosenIndices) {
         Map<String, List<Integer>> mapping = new HashMap<>();
         int relevantIndices = data.length() - motifLength;
         for (int i = 0; i <= relevantIndices; i++) {
@@ -103,6 +110,10 @@ public class Algorithm {
                 mapping.put(k_scatter, indices);
             }
         }
+        mapping.forEach((s, integers) -> {
+            System.out.println(s);
+            System.out.println("\t" + integers);
+        });
         return mapping;
     }
 
