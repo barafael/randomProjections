@@ -1,6 +1,7 @@
 package algorithm;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
 /**
@@ -30,7 +31,19 @@ public class Algorithm {
             Map<String, List<Integer>> hash = hashSubstring(data, motifLength, k);
             hashes.add(hash);
         }
+        System.out.println("Hashes:");
+        hashes.forEach(h ->
+                h.forEach((string, integers) -> {
+                    System.out.println(string);
+                    System.out.println("\t" + integers);
+                }));
         Map<Integer, List<Integer>> friendLists = makeFriendLists(hashes);
+        System.out.println("Friendlists:");
+        friendLists.entrySet().stream().forEach(entry -> {
+            System.out.println(entry.getKey());
+            System.out.println("\t" + entry.getValue());
+        });
+
         //TODO interpret result
         Map<String, Integer> result = new HashMap<>();
         return result;
@@ -110,10 +123,6 @@ public class Algorithm {
                 mapping.put(k_scatter, indices);
             }
         }
-        mapping.forEach((s, integers) -> {
-            System.out.println(s);
-            System.out.println("\t" + integers);
-        });
         return mapping;
     }
 
@@ -129,7 +138,22 @@ public class Algorithm {
      * @return map of (indices of motifs m to lists of (indices of friends of m))
      */
     private static Map<Integer, List<Integer>> makeFriendLists(List<Map<String, List<Integer>>> hashes) {
-        return null;
+        ConcurrentHashMap<Integer, List<Integer>> result = new ConcurrentHashMap<>();
+        hashes.parallelStream().map(hashmap -> hashmap.entrySet().parallelStream())
+                .forEach(entries -> entries.forEach(e -> {
+                            List<Integer> friends = e.getValue();
+                            for (Integer index : friends) {
+                                if (result.containsKey(index)) {
+                                    List<Integer> indices = result.get(index);
+                                    friends.stream().filter(i -> i != index).forEach(indices::add);
+                                } else {
+                                    List<Integer> indices = new ArrayList<>();
+                                    friends.stream().filter(i -> i != index).forEach(indices::add);
+                                    result.put(index, indices);
+                                }
+                            }
+                        }
+                ));
+        return result;
     }
 }
-
