@@ -1,5 +1,7 @@
 package algorithm;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
@@ -8,7 +10,7 @@ import java.util.stream.IntStream;
  * Algorithm to find a motif in a string of data by using random projections(random selections of indices).
  * Part of randomProjections, in package algorithm.
  */
-public class Algorithm {
+public class RandomProjections {
     /**
      * Random Projections algorithm
      * Takes a reference to data, a motif length and the amount of permitted errors.
@@ -31,22 +33,30 @@ public class Algorithm {
             Map<String, List<Integer>> hash = hashSubstring(data, motifLength, k);
             hashes.add(hash);
         }
+        Map<Integer, List<Integer>> friendLists = makeFriendlists(hashes);
+        printHashes(hashes);
+        printFriendlists(friendLists);
+
+        //TODO interpret result
+        Map<String, Integer> result = new HashMap<>();
+        return result;
+    }
+
+    private static void printHashes(List<Map<String, List<Integer>>> hashes) {
         System.out.println("Hashes:");
         hashes.forEach(h ->
                 h.forEach((string, integers) -> {
                     System.out.println(string);
                     System.out.println("\t" + integers);
                 }));
-        Map<Integer, List<Integer>> friendLists = makeFriendLists(hashes);
+    }
+
+    private static void printFriendlists(Map<Integer, List<Integer>> friendLists) {
         System.out.println("Friendlists:");
         friendLists.entrySet().stream().forEach(entry -> {
             System.out.println(entry.getKey());
             System.out.println("\t" + entry.getValue());
         });
-
-        //TODO interpret result
-        Map<String, Integer> result = new HashMap<>();
-        return result;
     }
 
     /**
@@ -58,7 +68,7 @@ public class Algorithm {
         int k_size = (int) (motifLength * 0.4);
         int[] k = new int[k_size];
         Random randomInt = new Random();
-        System.out.println("k: " + k_size + " random ints between 0 and L(excluding L). L: " + motifLength);
+        // System.out.println("k: " + k_size + " random ints between 0 and L(excluding L). L: " + motifLength);
         for (int i = 0; i < k_size; ) {
             int randomIndex = randomInt.nextInt(motifLength);
             boolean vacant = IntStream.of(k).noneMatch(integer -> integer == randomIndex); // check for duplicates
@@ -68,17 +78,17 @@ public class Algorithm {
             }
         }
         Arrays.sort(k);
-        Arrays.stream(k).forEach(System.out::println);
+        // Arrays.stream(k).forEach(System.out::println);
         return k;
     }
 
 
     /**
-     * Creates the k-scatter of the passed substring
+     * Creates the k-sample of the passed substring
      *
-     * @param substring     Substring to scatter
+     * @param substring     Substring to sample
      * @param chosenIndices Indices to choose from substring
-     * @return a string for which the characters are chosen as the characters at i for i in chosenIndex(the k-scatter of substring)
+     * @return a string for which the characters are chosen as the characters at i for i in chosenIndex(the k-sample of substring)
      */
     private static String applyScatter(String substring, int[] chosenIndices) {
         if (chosenIndices.length > substring.length()) {
@@ -93,36 +103,38 @@ public class Algorithm {
 
     /**
      * Hashes all substrings of specified length in data to buckets. Two substrings a and b are hashed to the same bucket exactly if
-     * a[i] == b[i] for all i in k. That means, all substrings in one bucket have the same k-scatter.
+     * a[i] == b[i] for all i in k. That means, all substrings in one bucket have the same k-sample.
      * <p>
      * A map of strings to lists of integers is returned. A list from the entry set contains the indices at which strings s start.
-     * All s have the same k-scatter, which is used as key.
+     * All s have the same k-sample, which is used as key.
      * All lists are guaranteed to be ordered. Additionally, each index from data appears exactly once in the entire hash, possibly opening up
      * opportunities for concurrent computation.
      *
      * @param data          String to be hashed
      * @param motifLength   length of substrings to be hashed
      * @param chosenIndices k. Array containing up to L-d random indices.
-     *                      If there were more indices, the k-scatter and the set of deviations in a motif could never be disjoint.
+     *                      If there were more indices, the k-sample and the set of deviations in a motif could never be disjoint.
      *                      The indices can be in the range [0, L-1].
-     * @return a mapping between k-scatters ks of substrings s of data and the indexes i where [ data[i + j] | j in k] == ks,
-     * i. e. where substrings share the same scatter.
+     * @return a mapping between k-samples ks of substrings s of data and the indexes i where [ data[i + j] | j in k] == ks,
+     * i. e. where substrings share the same sample.
      */
     private static Map<String, List<Integer>> hashSubstring(final String data, final int motifLength, final int[] chosenIndices) {
+        Instant now = Instant.now();
         Map<String, List<Integer>> mapping = new HashMap<>();
         int relevantIndices = data.length() - motifLength;
         for (int i = 0; i <= relevantIndices; i++) {
             String substring = data.substring(i, i + motifLength); // if endIndex is largestIndex + 1 (==data.length()) then the last character is included in substring
-            String k_scatter = applyScatter(substring, chosenIndices);
-            if (mapping.containsKey(k_scatter)) {
-                List<Integer> indices = mapping.get(k_scatter);
+            String k_sample = applyScatter(substring, chosenIndices);
+            if (mapping.containsKey(k_sample)) {
+                List<Integer> indices = mapping.get(k_sample);
                 indices.add(i);
             } else {
                 List<Integer> indices = new ArrayList<>();
                 indices.add(i);
-                mapping.put(k_scatter, indices);
+                mapping.put(k_sample, indices);
             }
         }
+        System.out.println("hashes: " + Duration.between(now, Instant.now()));
         return mapping;
     }
 
@@ -134,10 +146,11 @@ public class Algorithm {
      * Returns a mapping of indices i to lists of indices j where the substring of data starting at i is friends with all
      * the substrings of data starting at j, with the length of the substrings being L.
      *
-     * @param hashes List of (hashes of (k-scatters to list of indices))
+     * @param hashes List of (hashes of (k-samples to list of indices))
      * @return map of (indices of motifs m to lists of (indices of friends of m))
      */
-    private static Map<Integer, List<Integer>> makeFriendLists(List<Map<String, List<Integer>>> hashes) {
+    private static Map<Integer, List<Integer>> makeFriendlists(List<Map<String, List<Integer>>> hashes) {
+        Instant now = Instant.now();
         ConcurrentHashMap<Integer, List<Integer>> result = new ConcurrentHashMap<>();
         hashes.parallelStream().map(hashmap -> hashmap.entrySet().parallelStream())
                 .forEach(entries -> entries.forEach(e -> {
@@ -154,6 +167,8 @@ public class Algorithm {
                             }
                         }
                 ));
+        result.entrySet().parallelStream().map(Map.Entry::getValue).forEach(Collections::sort);
+        System.out.println("Friendlists: " + Duration.between(now, Instant.now()));
         return result;
     }
 }
