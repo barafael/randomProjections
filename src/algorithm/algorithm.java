@@ -54,6 +54,25 @@ public class algorithm {
         return k;
     }
 
+
+    /**
+     * Creates the k-scatter of the passed substring
+     *
+     * @param substring        Substring to scatter
+     * @param chosenIndices Indices to shoose from substring
+     * @return
+     */
+    private static String applyScatter(String substring, int[] chosenIndices) {
+        if (chosenIndices.length > substring.length()) {
+            throw new IllegalArgumentException();
+        }
+        StringBuilder buddy = new StringBuilder(chosenIndices.length);
+        for (int i = 0; i < chosenIndices.length; i++) {
+            buddy.append(substring.charAt(chosenIndices[i]));
+        }
+        return buddy.toString();
+    }
+
     /**
      * Hashes all substrings of specified length in data to buckets. Two substrings a and b are hashed to the same bucket exactly if
      * a[i] == b[i] for all i in k. That means, all substrings in one bucket have the same k-scatter.
@@ -71,8 +90,22 @@ public class algorithm {
      * @return a mapping between k-scatters ks of substrings s of data and the indexes i where [ data[i + j] | j in k] == ks,
      * i. e. where substrings share the same scatter.
      */
-    private static Map<String, List<Integer>> hash(String data, int motifLength, int[] chosenIndices) {
-        return null;
+    private static Map<String, List<Integer>> hash(final String data, final int motifLength, final int[] chosenIndices) {
+        Map<String, List<Integer>> mapping = new HashMap<>();
+        int relevantIndices = data.length() - motifLength;
+        for (int i = 0; i <= relevantIndices; i++) {
+            String substring = data.substring(i, i + motifLength); // if endIndex is largestIndex + 1 (==data.length()) then the last character is included in substring
+            String k_scatter = applyScatter(substring, chosenIndices);
+            if (mapping.containsKey(k_scatter)) {
+                List<Integer> indices = mapping.get(k_scatter);
+                indices.add(i);
+            } else {
+                List<Integer> indices = new ArrayList<>();
+                indices.add(i);
+                mapping.put(k_scatter, indices);
+            }
+        }
+        return mapping;
     }
 
     /**
