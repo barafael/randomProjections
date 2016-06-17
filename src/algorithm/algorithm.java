@@ -1,6 +1,7 @@
 package algorithm;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +33,9 @@ public class algorithm {
             hashes.add(hash);
         }
         Map<Integer, List<Integer>> friendLists = makeFriendLists(hashes);
+        //TODO interpret result
+        Map<String, Integer> result = new HashMap<>();
+        return result;
     }
 
     /**
@@ -42,9 +46,9 @@ public class algorithm {
     private static int[] create_k(int motifLength) {
         int k_size = motifLength / 3;
         int[] k = new int[k_size];
-        System.out.println("k: " + k_size);
+        System.out.println("k: " + k_size + " random ints between 0 and L(excluding L). L: " + motifLength);
         for (int i = 0; i < k.length; i++) {
-            k[i] = (int) Math.random() * motifLength;
+            k[i] = (int) (Math.random() * motifLength);
             System.out.println(k[i]);
         }
         return k;
