@@ -16,9 +16,10 @@ public class Main {
         // motifs of length 4 might be: some, byte, (sequ, eque, ..., ence)
         // somesequence is a motif of length 4 even if it is obfuscated a little
         String data = "someseruenceterabytesomtsequencenoisebiterepeatsomesequencdwhatisbyttspace somezequencequencesomesaucegingersomesequebcebyteis8bitsomesequence";
-        randomProjections(data, 10, 3, 3);
+        randomProjections(data, 10, 3, 3, 2);
         try {
-            System.out.println(readFile("../midiParser/assets/midi/csv/preludioC.mid/tracks/track0.csv", 1));
+            String preludio = readFile("../midiParser/assets/midi/csv/preludioC.mid/tracks/track0.csv", 1);
+            randomProjections(preludio, 12, 3, 4, 3);
         } catch (IOException e) {
             e.printStackTrace();
         }
