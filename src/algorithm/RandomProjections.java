@@ -6,6 +6,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
+import static java.util.stream.Collectors.toList;
+
 /**
  * Algorithm to find a motif in a string of data by using random projections(random selections of indices).
  * Part of randomProjections, in package algorithm.
@@ -22,7 +24,7 @@ public class RandomProjections {
      * @param iterations      Number of times to repeat process
      * @return Returns a mapping between motifs and their support
      */
-    public static Map<String, Integer> randomProjections(String data, int motifLength, int permittedErrors, int iterations) {
+    public static Map<String, Integer> randomProjections(String data, int motifLength, int permittedErrors, int iterations, int quorum) {
         if (data.length() < 15 || motifLength > data.length() / 3 || motifLength < 4 || permittedErrors > motifLength / 2) {
             System.err.println("Arguments are not going to lead to satisfactory result!"); //TODO change parameters to more accurately reflect valid input ranges
         }
@@ -37,9 +39,37 @@ public class RandomProjections {
         printHashes(hashes);
         printFriendlists(friendLists);
 
-        //TODO interpret result
         Map<String, Integer> result = new HashMap<>();
+        List<Map.Entry<Integer, List<Integer>>> entryList = friendLists.entrySet().stream().sorted(
+                (a, b) -> (a.getValue().size() - b.getValue().size())
+        ).collect(toList()); // a list of (indices mapped to sorted lists of friends) sorted by length of the indices' friendslist
+        for (int i = 0; i < entryList.size(); i++) {
+            Map.Entry<Integer, List<Integer>> entry = entryList.get(i);
+            if(entry.getValue().size() > quorum) {
+
+            }
+        }
+        System.out.println();
         return result;
+    }
+
+    /**
+     * Gets a list of integers and returns a list with tuples of integers and the count of their occurence, sorted as most frequent first
+     */
+    private static List<Map.Entry<Integer, Integer>> duplicateCount(List<Integer> list) {
+        Collections.sort(list);
+        Map<Integer, Integer> duplicates = new HashMap<>(); // maps indices to the count of occurrences
+        for (Integer num : list) {
+            if (duplicates.containsKey(num)) {
+                duplicates.put(num, duplicates.get(num) + 1);
+            } else {
+                duplicates.put(num, 1);
+            }
+        }
+        return duplicates.entrySet().stream()
+                .sorted(
+                        (a, b) -> a.getValue().compareTo(b.getValue())
+                ).collect(toList());
     }
 
     private static void printHashes(List<Map<String, List<Integer>>> hashes) {
