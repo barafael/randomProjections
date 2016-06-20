@@ -1,4 +1,4 @@
-randomProjections
+Random Projections
 =================
 An algorithm to discover motifs(recurring contiguous subsequences) in symbolic data.
 
