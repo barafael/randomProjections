@@ -11,6 +11,12 @@ import static java.util.stream.Collectors.toList;
  * Part of randomProjections, in package algorithm.
  */
 public class RandomProjections {
+    private static final int MINIMUM_DATA_LENGTH = 50;
+    private static final double MAXIMUM_MOTIF_LENGTH_FACTOR = 0.2;
+    private static final int MINIMUM_MOTIF_LENGTH = 4;
+    private static final double MAXIMUM_ERROR_FACTOR = 0.4;
+    private static final double K_SIZE_FACTOR = 0.4;
+
     /**
      * Random Projections algorithm
      * Takes a reference to data, a motif length and the amount of permitted errors.
@@ -23,7 +29,7 @@ public class RandomProjections {
      * @return Returns a mapping between motifs and their support
      */
     public static Map<String, Integer> randomProjections(String data, int motifLength, int permittedErrors, int iterations, int quorum) {
-        if (data.length() < 15 || motifLength > data.length() / 3 || motifLength < 4 || permittedErrors > motifLength / 2) {
+        if (data.length() < MINIMUM_DATA_LENGTH || motifLength > data.length() * MAXIMUM_MOTIF_LENGTH_FACTOR || motifLength < MINIMUM_MOTIF_LENGTH || permittedErrors > motifLength * MAXIMUM_ERROR_FACTOR) {
             System.err.println("Arguments are not going to lead to satisfactory result!"); //TODO change parameters to more accurately reflect valid input ranges
         }
 
@@ -50,11 +56,9 @@ public class RandomProjections {
                 (a, b) -> (a.getValue().size() - b.getValue().size())
         ).collect(toList()); // a list of (indices mapped to sorted lists of friends) sorted by length of the indices' friendslist
 
-        for (Map.Entry<Integer, List<Integer>> entry : entryList) {
-            if (entry.getValue().size() > quorum) {
+        entryList.stream().filter(entry -> entry.getValue().size() > quorum).forEachOrdered(entry -> {
 
-            }
-        }
+        });
 
         Map<String, Integer> result = new HashMap<>();
         System.out.println();
@@ -123,7 +127,7 @@ public class RandomProjections {
      * k too large: overlap with error index, k too small: insufficient accuracy
      */
     private static int[] create_k(int motifLength) {
-        int k_size = (int) (motifLength * 0.4);
+        int k_size = (int) (motifLength * K_SIZE_FACTOR);
         int[] k = new int[k_size];
         Random randomInt = new Random();
         // System.out.println("k: " + k_size + " random ints between 0 and L(excluding L). L: " + motifLength);
@@ -154,7 +158,7 @@ public class RandomProjections {
      */
     private static Map<Integer, List<Integer>> makeFriendlists(List<Map<String, List<Integer>>> hashes) {
         // Instant now = Instant.now();
-        ConcurrentHashMap<Integer, List<Integer>> result = new ConcurrentHashMap<>();
+        Map<Integer, List<Integer>> result = new ConcurrentHashMap<>();
         hashes.parallelStream().map(hashmap -> hashmap.entrySet().parallelStream())
                 .forEach(entries -> entries.forEach(e -> {
                             List<Integer> friends = e.getValue();
