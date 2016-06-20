@@ -1,7 +1,5 @@
 package algorithm;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
@@ -29,64 +27,94 @@ public class RandomProjections {
             System.err.println("Arguments are not going to lead to satisfactory result!"); //TODO change parameters to more accurately reflect valid input ranges
         }
 
-        List<Map<String, List<Integer>>> hashes = new ArrayList<>(iterations);
+        List<Map<String, List<Integer>>> hashes = new ArrayList<>(iterations); // list of (mapping of string s to list l of integers i) where s are k-samples in data and l contains the indices of data at which k-similar substrings occur
         for (int i = 0; i < iterations; i++) {
             int[] k = create_k(motifLength);
-            Map<String, List<Integer>> hash = hashSubstring(data, motifLength, k);
-            hashes.add(hash);
+            hashes.add(hashSubstring(data, motifLength, k));
         }
         Map<Integer, List<Integer>> friendLists = makeFriendlists(hashes);
+        List<Motif> motifList = new ArrayList<>();
+        friendLists.entrySet().stream().forEach(
+                entry -> {
+                    String mot = data.substring(entry.getKey(), entry.getKey() + motifLength); // check: is that right length?
+                    motifList.add(new Motif(mot, entry.getKey(), entry.getValue()));
+                }
+        );
+
+
+
         printHashes(hashes);
         printFriendlists(friendLists);
 
-        Map<String, Integer> result = new HashMap<>();
         List<Map.Entry<Integer, List<Integer>>> entryList = friendLists.entrySet().stream().sorted(
                 (a, b) -> (a.getValue().size() - b.getValue().size())
         ).collect(toList()); // a list of (indices mapped to sorted lists of friends) sorted by length of the indices' friendslist
-        for (int i = 0; i < entryList.size(); i++) {
-            Map.Entry<Integer, List<Integer>> entry = entryList.get(i);
-            if(entry.getValue().size() > quorum) {
+
+        for (Map.Entry<Integer, List<Integer>> entry : entryList) {
+            if (entry.getValue().size() > quorum) {
 
             }
         }
+
+        Map<String, Integer> result = new HashMap<>();
         System.out.println();
         return result;
     }
 
+
     /**
-     * Gets a list of integers and returns a list with tuples of integers and the count of their occurence, sorted as most frequent first
+     * Hashes all substrings of specified length in data to buckets. Two substrings a and b are hashed to the same bucket exactly if
+     * a[i] == b[i] for all i in k. That means, all substrings in one bucket have the same k-sample.
+     * <p>
+     * A map of strings to lists of integers is returned. A list from the entry set contains the indices at which strings s start.
+     * All s have the same k-sample, which is used as key.
+     * All lists are guaranteed to be ordered. Additionally, each index from data appears exactly once in the entire hash, possibly opening up
+     * opportunities for concurrent computation.
+     *
+     * @param data          String to be hashed
+     * @param motifLength   length of substrings to be hashed
+     * @param chosenIndices k. Array containing up to L-d random indices.
+     *                      If there were more indices, the k-sample and the set of deviations in a motif could never be disjoint.
+     *                      The indices can be in the range [0, L-1].
+     * @return a mapping between k-samples ks of substrings s of data and the indexes i where [ data[i + j] | j in k] == ks,
+     * i. e. where substrings share the same sample.
      */
-    private static List<Map.Entry<Integer, Integer>> duplicateCount(List<Integer> list) {
-        Collections.sort(list);
-        Map<Integer, Integer> duplicates = new HashMap<>(); // maps indices to the count of occurrences
-        for (Integer num : list) {
-            if (duplicates.containsKey(num)) {
-                duplicates.put(num, duplicates.get(num) + 1);
+    private static Map<String, List<Integer>> hashSubstring(final String data, final int motifLength, final int[] chosenIndices) {
+        // Instant now = Instant.now();
+        Map<String, List<Integer>> mapping = new HashMap<>();
+        int relevantIndices = data.length() - motifLength; // no overshoot at the end!
+        for (int i = 0; i <= relevantIndices; i++) {
+            String substring = data.substring(i, i + motifLength); // if endIndex is largestIndex + 1 (==data.length()) then the last character is included in substring
+            String k_sample = applyScatter(substring, chosenIndices);
+            if (mapping.containsKey(k_sample)) {
+                List<Integer> indices = mapping.get(k_sample);
+                indices.add(i);
             } else {
-                duplicates.put(num, 1);
+                List<Integer> indices = new ArrayList<>();
+                indices.add(i);
+                mapping.put(k_sample, indices);
             }
         }
-        return duplicates.entrySet().stream()
-                .sorted(
-                        (a, b) -> a.getValue().compareTo(b.getValue())
-                ).collect(toList());
+        // System.out.println("hashes: " + Duration.between(now, Instant.now()));
+        return mapping;
     }
 
-    private static void printHashes(List<Map<String, List<Integer>>> hashes) {
-        System.out.println("Hashes:");
-        hashes.forEach(h ->
-                h.forEach((string, integers) -> {
-                    System.out.println(string);
-                    System.out.println("\t" + integers);
-                }));
-    }
-
-    private static void printFriendlists(Map<Integer, List<Integer>> friendLists) {
-        System.out.println("Friendlists:");
-        friendLists.entrySet().stream().forEach(entry -> {
-            System.out.println(entry.getKey());
-            System.out.println("\t" + entry.getValue());
-        });
+    /**
+     * Creates the k-sample of the passed substring
+     *
+     * @param substring     Substring to sample
+     * @param chosenIndices Indices to choose from substring
+     * @return a string for which the characters are chosen as the characters at i for i in chosenIndex(the k-sample of substring)
+     */
+    private static String applyScatter(String substring, int[] chosenIndices) {
+        if (chosenIndices.length > substring.length()) {
+            throw new IllegalArgumentException();
+        }
+        StringBuilder buddy = new StringBuilder(chosenIndices.length);
+        for (int chosenIndex : chosenIndices) {
+            buddy.append(substring.charAt(chosenIndex));
+        }
+        return buddy.toString();
     }
 
     /**
@@ -114,61 +142,6 @@ public class RandomProjections {
 
 
     /**
-     * Creates the k-sample of the passed substring
-     *
-     * @param substring     Substring to sample
-     * @param chosenIndices Indices to choose from substring
-     * @return a string for which the characters are chosen as the characters at i for i in chosenIndex(the k-sample of substring)
-     */
-    private static String applyScatter(String substring, int[] chosenIndices) {
-        if (chosenIndices.length > substring.length()) {
-            throw new IllegalArgumentException();
-        }
-        StringBuilder buddy = new StringBuilder(chosenIndices.length);
-        for (int chosenIndex : chosenIndices) {
-            buddy.append(substring.charAt(chosenIndex));
-        }
-        return buddy.toString();
-    }
-
-    /**
-     * Hashes all substrings of specified length in data to buckets. Two substrings a and b are hashed to the same bucket exactly if
-     * a[i] == b[i] for all i in k. That means, all substrings in one bucket have the same k-sample.
-     * <p>
-     * A map of strings to lists of integers is returned. A list from the entry set contains the indices at which strings s start.
-     * All s have the same k-sample, which is used as key.
-     * All lists are guaranteed to be ordered. Additionally, each index from data appears exactly once in the entire hash, possibly opening up
-     * opportunities for concurrent computation.
-     *
-     * @param data          String to be hashed
-     * @param motifLength   length of substrings to be hashed
-     * @param chosenIndices k. Array containing up to L-d random indices.
-     *                      If there were more indices, the k-sample and the set of deviations in a motif could never be disjoint.
-     *                      The indices can be in the range [0, L-1].
-     * @return a mapping between k-samples ks of substrings s of data and the indexes i where [ data[i + j] | j in k] == ks,
-     * i. e. where substrings share the same sample.
-     */
-    private static Map<String, List<Integer>> hashSubstring(final String data, final int motifLength, final int[] chosenIndices) {
-        Instant now = Instant.now();
-        Map<String, List<Integer>> mapping = new HashMap<>();
-        int relevantIndices = data.length() - motifLength;
-        for (int i = 0; i <= relevantIndices; i++) {
-            String substring = data.substring(i, i + motifLength); // if endIndex is largestIndex + 1 (==data.length()) then the last character is included in substring
-            String k_sample = applyScatter(substring, chosenIndices);
-            if (mapping.containsKey(k_sample)) {
-                List<Integer> indices = mapping.get(k_sample);
-                indices.add(i);
-            } else {
-                List<Integer> indices = new ArrayList<>();
-                indices.add(i);
-                mapping.put(k_sample, indices);
-            }
-        }
-        System.out.println("hashes: " + Duration.between(now, Instant.now()));
-        return mapping;
-    }
-
-    /**
      * This method constructs a 'friend list' for a given list of hashes.
      * For all indexes i of data, the bucket containing i is selected from every hash.
      * The indices in the bucket, ignoring i itself but preserving other duplicates, are added to the friends list of i.
@@ -180,7 +153,7 @@ public class RandomProjections {
      * @return map of (indices of motifs m to lists of (indices of friends of m))
      */
     private static Map<Integer, List<Integer>> makeFriendlists(List<Map<String, List<Integer>>> hashes) {
-        Instant now = Instant.now();
+        // Instant now = Instant.now();
         ConcurrentHashMap<Integer, List<Integer>> result = new ConcurrentHashMap<>();
         hashes.parallelStream().map(hashmap -> hashmap.entrySet().parallelStream())
                 .forEach(entries -> entries.forEach(e -> {
@@ -198,7 +171,43 @@ public class RandomProjections {
                         }
                 ));
         result.entrySet().parallelStream().map(Map.Entry::getValue).forEach(Collections::sort);
-        System.out.println("Friendlists: " + Duration.between(now, Instant.now()));
+        // System.out.println("Friendlists: " + Duration.between(now, Instant.now()));
         return result;
+    }
+
+    /**
+     * Gets a list of integers and returns a list with tuples of integers and the count of their occurence, sorted as most frequent first
+     */
+    private static List<Map.Entry<Integer, Integer>> duplicateCount(List<Integer> list) {
+        Collections.sort(list);
+        Map<Integer, Integer> duplicates = new HashMap<>(); // maps indices to the count of occurrences
+        for (Integer num : list) {
+            if (duplicates.containsKey(num)) {
+                duplicates.put(num, duplicates.get(num) + 1);
+            } else {
+                duplicates.put(num, 1);
+            }
+        }
+        return duplicates.entrySet().stream()
+                .sorted(
+                        (a, b) -> a.getValue().compareTo(b.getValue()) // check: right sorting?
+                ).collect(toList());
+    }
+
+    private static void printHashes(List<Map<String, List<Integer>>> hashes) {
+        System.out.println("Hashes:");
+        hashes.forEach(h ->
+                h.forEach((string, integers) -> {
+                    System.out.println(string);
+                    System.out.println("\t" + integers);
+                }));
+    }
+
+    private static void printFriendlists(Map<Integer, List<Integer>> friendLists) {
+        System.out.println("Friendlists:");
+        friendLists.entrySet().stream().forEach(entry -> {
+            System.out.println(entry.getKey());
+            System.out.println("\t" + entry.getValue());
+        });
     }
 }
