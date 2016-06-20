@@ -38,19 +38,16 @@ public class RandomProjections {
             int[] k = create_k(motifLength);
             hashes.add(hashSubstring(data, motifLength, k));
         }
+
         Map<Integer, List<Integer>> friendLists = makeFriendlists(hashes);
-        List<Motif> motifList = new ArrayList<>();
-        friendLists.entrySet().stream().forEach(
-                entry -> {
-                    String mot = data.substring(entry.getKey(), entry.getKey() + motifLength); // check: is that right length?
-                    motifList.add(new Motif(mot, entry.getKey(), entry.getValue()));
-                }
-        );
 
-
+        List<Motif> motifList = makeMotifList(data, motifLength, quorum, friendLists);
 
         printHashes(hashes);
         printFriendlists(friendLists);
+
+        motifList.stream().sorted((a, b) -> b.calculateScore().compareTo(a.calculateScore()))
+                .forEach(System.out::println);
 
         List<Map.Entry<Integer, List<Integer>>> entryList = friendLists.entrySet().stream().sorted(
                 (a, b) -> (a.getValue().size() - b.getValue().size())
@@ -64,7 +61,6 @@ public class RandomProjections {
         System.out.println();
         return result;
     }
-
 
     /**
      * Hashes all substrings of specified length in data to buckets. Two substrings a and b are hashed to the same bucket exactly if
@@ -102,6 +98,7 @@ public class RandomProjections {
         // System.out.println("hashes: " + Duration.between(now, Instant.now()));
         return mapping;
     }
+
 
     /**
      * Creates the k-sample of the passed substring
@@ -144,7 +141,6 @@ public class RandomProjections {
         return k;
     }
 
-
     /**
      * This method constructs a 'friend list' for a given list of hashes.
      * For all indexes i of data, the bucket containing i is selected from every hash.
@@ -178,6 +174,19 @@ public class RandomProjections {
         // System.out.println("Friendlists: " + Duration.between(now, Instant.now()));
         return result;
     }
+
+
+    private static List<Motif> makeMotifList(String data, int motifLength, int quorum,
+                                             Map<Integer, List<Integer>> friendLists) {
+        List<Motif> motifList = new ArrayList<>();
+        friendLists.forEach((index, friends) -> {
+            Motif motif = new Motif(data.substring(index, index + motifLength), index);
+            motif.setFriends(duplicateCount(friends), quorum);
+            motifList.add(motif);
+        });
+        return motifList;
+    }
+    //private static List<Integer> motivicnessList(String data, List<Motif<>)
 
     /**
      * Gets a list of integers and returns a list with tuples of integers and the count of their occurence, sorted as most frequent first
@@ -215,3 +224,6 @@ public class RandomProjections {
         });
     }
 }
+//TODO: use map.foreach((k, v)->{..} instead of cumbersome construct with map entry
+//TODO: use some form of tuple class instead of Map.Entry
+//TODO see what can be done about quorum - perhaps continuize everything?
