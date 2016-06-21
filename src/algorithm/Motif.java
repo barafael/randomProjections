@@ -11,7 +11,7 @@ import static java.lang.Math.sqrt;
 class Motif {
     private final String data;
     private final int index;
-    private List<Integer> friends = new ArrayList<>();
+    private final List<Integer> friends = new ArrayList<>();
     private final Map<Integer, Integer> closeFriends = new HashMap<>(); // maps close friend to proximity
     private double score = 1;
     private boolean friendsChanged = true;

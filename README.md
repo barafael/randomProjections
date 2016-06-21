@@ -2,12 +2,14 @@ Random Projections
 =================
 An algorithm to discover motifs(recurring contiguous subsequences) in symbolic data.
 
-Paper by Jeremy Buhler and Martin Tompa at: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.571.9730&rep=rep1&type=pdf
+Paper by Jeremy Buhler and Martin Tompa at:
+http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.571.9730&rep=rep1&type=pdf
 
 Terminology
 -----------
 
- * data: Long string containing instances of planted or real motifs, flawed by up to a specified number of differences from the model.
+ * data: Long string containing instances of planted or real motifs,
+ flawed by up to a specified number of differences from the model.
 
  * n: Length of data
 
@@ -26,7 +28,8 @@ Terminology
 
  * k-similar: two strings of same length are k-similar if their k-samples are identical for sample k.
 
- * k: Array or collection containing up to L-d random indices where L is the length of the motif and d is the error tolerance.
+ * k: Array or collection containing up to L-d random indices where L is the length of the motif and
+ d is the error tolerance.
      If there were more indices, the k-sample and the set of indices of deviations in a motif could never be disjoint.
  The indices can be in the range [0, L-1].
 

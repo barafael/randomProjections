@@ -12,14 +12,4 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
-Würde .gitignore löschen
-Würde .idea/ löschen
-Würde randomProjections.iml löschen
-Würde .idea/compiler.xml löschen
-Würde .idea/copyright/ löschen
-Würde .idea/dictionaries/ löschen
-Würde .idea/misc.xml löschen
-Würde .idea/modules.xml löschen
-Würde .idea/vcs.xml löschen
-Würde .idea/workspace.xml löschen
-Würde out/ löschen
+
