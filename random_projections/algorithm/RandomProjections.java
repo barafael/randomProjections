@@ -32,6 +32,7 @@ public class RandomProjections {
      * @param motifLength     Length of motif
      * @param permittedErrors Allowed distance of an instance of a motif from the implicit model
      * @param iterations      Number of times to repeat process
+     * @param quorum          determines after how many duplicate occurrences a friend becomes a close friend.
      * @return Returns a mapping between motifs and their support
      */
     public static List<Motif> randomProjections(String data, int motifLength,
@@ -72,15 +73,6 @@ public class RandomProjections {
         });
 
         return motifList;
-    }
-
-    private static void printMotivicness(String data, int motifLength, List<Motif> motifList, double v) {
-        int[] motivicness = motivicnessArr(data, motifLength, motifList, 7.0d);
-        char[] dataChar = data.toCharArray();
-        for (int i = 0; i < dataChar.length; i++) {
-            System.out.println(SymbolConverter.flatSharpInflater(Character.toString(dataChar[i])) +
-                    new String(new char[motivicness[i]]).replace("\0", "*") );
-        }
     }
 
     /**
@@ -124,7 +116,6 @@ public class RandomProjections {
         return mapping;
     }
 
-
     /**
      * Creates the k-sample of the passed substring
      *
@@ -143,6 +134,7 @@ public class RandomProjections {
         }
         return buddy.toString();
     }
+
 
     /**
      * create and populate k with k_size random numbers between 0 and L-1
@@ -184,22 +176,15 @@ public class RandomProjections {
         // 1.: parallel stream all maps in list
         // 2.: parallel stream all entries in entrysets of hashes
         // 3.: for each entry in streamed hash, add it to the index list
-        hashes.parallelStream().map(hashmap -> hashmap.entrySet().parallelStream())
-                .forEach(entries -> entries.forEach(e -> {
-                            List<Integer> friends = e.getValue();
+        hashes.parallelStream()
+                .flatMap(hashmap -> hashmap.values().parallelStream())
+                .forEach(friends -> {
                             for (Integer index : friends) {
-                                if (result.containsKey(index)) {
-                                    List<Integer> indices = result.get(index);
-                                    // add each index in friends to indices,except index(which can occur more than once)
-                                    friends.stream().filter(i -> !i.equals(index)).forEach(indices::add);
-                                } else {
-                                    List<Integer> indices = new ArrayList<>();
-                                    friends.stream().filter(i -> !i.equals(index)).forEach(indices::add);
-                                    result.put(index, indices);
-                                }
+                                List<Integer> indices = result.computeIfAbsent(index, ArrayList<Integer>::new);
+                                friends.stream().filter(i -> !i.equals(index)).forEach(indices::add);
                             }
                         }
-                ));
+                );
         result.entrySet().parallelStream().map(Map.Entry::getValue).forEach(Collections::sort);
         // System.out.println("Friendlists: " + Duration.between(now, Instant.now()));
         return result;
@@ -262,6 +247,15 @@ public class RandomProjections {
                 ).collect(toList());
     }
 
+    private static void printMotivicness(String data, int motifLength, List<Motif> motifList, double v) {
+        int[] motivicness = motivicnessArr(data, motifLength, motifList, 7.0d);
+        char[] dataChar = data.toCharArray();
+        for (int i = 0; i < dataChar.length; i++) {
+            System.out.println(SymbolConverter.flatSharpInflater(Character.toString(dataChar[i])) +
+                    new String(new char[motivicness[i]]).replace("\0", "*"));
+        }
+    }
+
     private static void printHashes(List<Map<String, List<Integer>>> hashes) {
         System.out.println("Hashes:");
         hashes.forEach(h ->
@@ -276,4 +270,8 @@ public class RandomProjections {
     }
 }
 //TODO: use some form of tuple class instead of Map.Entry
-//TODO see what can be done about quorum - perhaps continuize everything?
+//TODO: use computeIfAbsent/Present where possible
+//TODO: see what can be done about quorum - perhaps continuize everything?
+//TODO: why does average score decrease with increasing motifLength?
+//TODO: fix possible multiple accesses in arraylist in makeFriendLists
+//TODO: possibly move duplicate counter to motif

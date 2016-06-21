@@ -20,7 +20,7 @@ class Main {
         // randomProjections(data, 10, 3, 3, 2);
         try {
             String preludio = readFile(1, "../midiParser/assets/midi/csv/preludioC.mid/tracks/track0.csv");
-            randomProjections(preludio, 12, 3, 4, 3);
+            randomProjections(preludio, 24, 3, 15, 3);
         } catch (IOException e) {
             e.printStackTrace();
         }
