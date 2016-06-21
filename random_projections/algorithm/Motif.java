@@ -1,6 +1,9 @@
 package algorithm;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static java.lang.Math.sqrt;
 
@@ -9,19 +12,27 @@ import static java.lang.Math.sqrt;
  * Part of randomProjections, in package algorithm.
  */
 class Motif {
-    private final String data;
+    private final String motif;
     private final int index;
     private final List<Integer> friends = new ArrayList<>();
     private final Map<Integer, Integer> closeFriends = new HashMap<>(); // maps close friend to proximity
     private double score = 1;
     private boolean friendsChanged = true;
 
-    public Motif(String data, int index) {
-        this.data = data;
+    public Motif(String motif, int index) {
+        this.motif = util.SymbolConverter.flatSharpInflater(motif);
         this.index = index;
     }
 
-    public void setFriends(List<Map.Entry<Integer, Integer>> allFriends, int quorum) {
+    public String getMotif() {
+        return motif;
+    }
+
+    int getIndex() {
+        return index;
+    }
+
+    void setFriends(List<Map.Entry<Integer, Integer>> allFriends, int quorum) {
         friendsChanged = true;
         allFriends.forEach(e -> {
             if (e.getValue() > quorum) {
@@ -35,10 +46,10 @@ class Motif {
     @Override
     public String toString() {
         return String.format("%s, index: %d, score: %.3f, friends: %d, close friends: %d",
-        data, index, calculateScore(), friends.size(), closeFriends.size());
+                motif, index, calculateScore(), friends.size(), closeFriends.size());
     }
 
-    public Double calculateScore() {
+    Double calculateScore() {
         if (friendsChanged) {
             // Perhaps the 'weight' of a close friend should be taken into account?
             score = sqrt(friends.size()) + closeFriends.size();
