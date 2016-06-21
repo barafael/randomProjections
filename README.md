@@ -33,5 +33,5 @@ Terminology
      If there were more indices, the k-sample and the set of indices of deviations in a motif could never be disjoint.
  The indices can be in the range [0, L-1].
 
- * Friend: 2 strings a and  b in data are defined to be friends if they share some k-samples
+ * Friend: 2 strings a and b in data are defined to be friends if they share some k-samples
      (i.e. if for some random projections, the samples of a and b are equal).
