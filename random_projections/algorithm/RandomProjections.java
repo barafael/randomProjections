@@ -1,5 +1,7 @@
 package algorithm;
 
+import util.SymbolConverter;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -32,32 +34,33 @@ public class RandomProjections {
      * @param iterations      Number of times to repeat process
      * @return Returns a mapping between motifs and their support
      */
-    public static Map<String, Integer> randomProjections(String data, int motifLength,
-                                                         int permittedErrors, int iterations, int quorum) {
+    public static List<Motif> randomProjections(String data, int motifLength,
+                                                int permittedErrors, int iterations, int quorum) {
+        String substitute = util.SymbolConverter.flatSharpCollapser(data);
         // check if data is reasonable
-        if (data.length() < MINIMUM_DATA_LENGTH ||
-                motifLength > data.length() * MAXIMUM_MOTIF_LENGTH_FACTOR ||
+        if (substitute.length() < MINIMUM_DATA_LENGTH ||
+                motifLength > substitute.length() * MAXIMUM_MOTIF_LENGTH_FACTOR ||
                 motifLength < MINIMUM_MOTIF_LENGTH ||
                 permittedErrors > motifLength * MAXIMUM_ERROR_FACTOR) {
             System.err.println("Arguments are probably not going to lead to satisfactory result!");
         }
-
         /* list of (mapping of string s to list l of integers i) where s are k-samples in data and l contains the
         indices of data at which k-similar substrings occur(for different k).
          */
         List<Map<String, List<Integer>>> hashes = new ArrayList<>(iterations);
         for (int i = 0; i < iterations; i++) {
             int[] k = create_k(motifLength);
-            hashes.add(hashSubstring(data, motifLength, k));
+            hashes.add(hashSubstring(substitute, motifLength, k));
         }
 
         Map<Integer, List<Integer>> friendLists = makeFriendlists(hashes);
 
-        List<Motif> motifList = makeMotifList(data, motifLength, quorum, friendLists);
+        List<Motif> motifList = makeMotifList(substitute, motifLength, quorum, friendLists);
 
         // printHashes(hashes);
         // printFriendlists(friendLists);
         motifList.forEach(System.out::println);
+        printMotivicness(substitute, motifLength, motifList, 7.0d);
 
         List<Map.Entry<Integer, List<Integer>>> entryList = friendLists.entrySet().stream().sorted(
                 (a, b) -> (a.getValue().size() - b.getValue().size())
@@ -68,9 +71,16 @@ public class RandomProjections {
 
         });
 
-        Map<String, Integer> result = new HashMap<>();
-        System.out.println();
-        return result;
+        return motifList;
+    }
+
+    private static void printMotivicness(String data, int motifLength, List<Motif> motifList, double v) {
+        int[] motivicness = motivicnessArr(data, motifLength, motifList, 7.0d);
+        char[] dataChar = data.toCharArray();
+        for (int i = 0; i < dataChar.length; i++) {
+            System.out.println(SymbolConverter.flatSharpInflater(Character.toString(dataChar[i])) +
+                    new String(new char[motivicness[i]]).replace("\0", "*") );
+        }
     }
 
     /**
@@ -201,6 +211,7 @@ public class RandomProjections {
      * The friend lists of the created motifs are populated by the motifs themselves. For this, the helper method
      * duplicateCount method is used.
      * A list containing motifs sorted by their score is returned.
+     *
      * @param data
      * @param motifLength
      * @param quorum
@@ -218,7 +229,18 @@ public class RandomProjections {
         return motifList.stream().sorted((a, b) -> b.calculateScore().compareTo(a.calculateScore()))
                 .collect(Collectors.toList());
     }
-    //private static List<Integer> motivicnessList(String data, List<Motif<>)
+
+    private static int[] motivicnessArr(String data, int motifLength, List<Motif> motifList, Double threshold) {
+        int[] motivicnessArr = new int[data.length()];
+        Arrays.fill(motivicnessArr, 0);
+        motifList.stream().filter(motif -> motif.calculateScore() >= threshold).forEach(motif -> {
+            double score = motif.calculateScore();
+            for (int i = motif.getIndex(); i < motif.getIndex() + motifLength; i++) {
+                motivicnessArr[i] += (int) Math.round(score);
+            }
+        });
+        return motivicnessArr;
+    }
 
     /**
      * Gets a list of integers and returns a list with tuples of integers and the count of their occurence,
