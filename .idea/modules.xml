@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/midiParser/midiParser.iml" filepath="$PROJECT_DIR$/midiParser/midiParser.iml" />
       <module fileurl="file://$PROJECT_DIR$/randomProjections.iml" filepath="$PROJECT_DIR$/randomProjections.iml" />
     </modules>
   </component>
