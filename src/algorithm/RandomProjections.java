@@ -2,6 +2,7 @@ package algorithm;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.toList;
@@ -11,6 +12,7 @@ import static java.util.stream.Collectors.toList;
  * Part of randomProjections, in package algorithm.
  */
 public class RandomProjections {
+    //TODO change parameters to more accurately reflect valid input ranges
     private static final int MINIMUM_DATA_LENGTH = 50;
     private static final double MAXIMUM_MOTIF_LENGTH_FACTOR = 0.2;
     private static final int MINIMUM_MOTIF_LENGTH = 4;
@@ -32,12 +34,12 @@ public class RandomProjections {
      */
     public static Map<String, Integer> randomProjections(String data, int motifLength,
                                                          int permittedErrors, int iterations, int quorum) {
+        // check if data is reasonable
         if (data.length() < MINIMUM_DATA_LENGTH ||
                 motifLength > data.length() * MAXIMUM_MOTIF_LENGTH_FACTOR ||
                 motifLength < MINIMUM_MOTIF_LENGTH ||
                 permittedErrors > motifLength * MAXIMUM_ERROR_FACTOR) {
-            //TODO change parameters to more accurately reflect valid input ranges
-            System.err.println("Arguments are not going to lead to satisfactory result!");
+            System.err.println("Arguments are probably not going to lead to satisfactory result!");
         }
 
         /* list of (mapping of string s to list l of integers i) where s are k-samples in data and l contains the
@@ -53,11 +55,9 @@ public class RandomProjections {
 
         List<Motif> motifList = makeMotifList(data, motifLength, quorum, friendLists);
 
-        printHashes(hashes);
-        printFriendlists(friendLists);
-
-        motifList.stream().sorted((a, b) -> b.calculateScore().compareTo(a.calculateScore()))
-                .forEach(System.out::println);
+        // printHashes(hashes);
+        // printFriendlists(friendLists);
+        motifList.forEach(System.out::println);
 
         List<Map.Entry<Integer, List<Integer>>> entryList = friendLists.entrySet().stream().sorted(
                 (a, b) -> (a.getValue().size() - b.getValue().size())
@@ -195,7 +195,18 @@ public class RandomProjections {
         return result;
     }
 
-
+    /**
+     * create a list of motifs from friendlist. The friendlist contains indices and friends,
+     * also containing close friends(entries occurring more than 'quorum' times).
+     * The friend lists of the created motifs are populated by the motifs themselves. For this, the helper method
+     * duplicateCount method is used.
+     * A list containing motifs sorted by their score is returned.
+     * @param data
+     * @param motifLength
+     * @param quorum
+     * @param friendLists
+     * @return
+     */
     private static List<Motif> makeMotifList(String data, int motifLength, int quorum,
                                              Map<Integer, List<Integer>> friendLists) {
         List<Motif> motifList = new ArrayList<>();
@@ -204,7 +215,8 @@ public class RandomProjections {
             motif.setFriends(duplicateCount(friends), quorum);
             motifList.add(motif);
         });
-        return motifList;
+        return motifList.stream().sorted((a, b) -> b.calculateScore().compareTo(a.calculateScore()))
+                .collect(Collectors.toList());
     }
     //private static List<Integer> motivicnessList(String data, List<Motif<>)
 
